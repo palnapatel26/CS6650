@@ -23,6 +23,7 @@ public class AlbumServlet extends HttpServlet {
         // albums/
         response.setContentType("text/plain");
         String urlPath = request.getPathInfo();
+        System.out.println("debug print: " + urlPath);
 
         // check we have a URL!
         if (urlPath == null || urlPath.isEmpty()) {
@@ -34,46 +35,45 @@ public class AlbumServlet extends HttpServlet {
         String[] urlParts = urlPath.split("/");
         // and now validate url path and return the response status code
         // (and maybe also some value if input is valid)
+        // [, album, albumID]
 
         if (!isUrlValidGet(urlParts)) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } else {
-            response.setStatus(HttpServletResponse.SC_OK);
-            // do any sophisticated processing with urlParts which contains all the url params
-            // TODO: process url params in `urlParts`
             String albumID = urlParts[1];
-            for(String key : dictionary.keySet()) {
-                if(Objects.equals(key, albumID)) {
-                    Gson gson = new Gson();
-                    Album album = dictionary.get(key);
-                    String albumString = gson.toJson(album);
+            Album album = dictionary.get(albumID);
+            if (album == null) {
+                response.getWriter().write("Album ID not found!");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            } else {
+                Gson gson = new Gson();
+                String albumString = gson.toJson(album);
 
-                    PrintWriter out = response.getWriter();
-                    response.setContentType("application/json");
-                    response.setCharacterEncoding("UTF-8");
-                    out.print(albumString);
-                    out.flush();
-                    response.getWriter().write("Album ID found!");
-                }
+                PrintWriter out = response.getWriter();
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                out.print(albumString);
+                out.flush();
+                response.getWriter().write("Album ID found!");
+                response.setStatus(HttpServletResponse.SC_OK);
+
             }
-            response.getWriter().write("Album ID not found!");
         }
 
-    }
-    private boolean isUrlValidPost(String[] urlParts) {
-        // TODO: validate the request url path according to the API spec
-        if(urlParts.length == 2 && urlParts[1].equals("albums")) {
-            return true;
-        }
-        return false;
     }
 
     private boolean isUrlValidGet(String[] urlParts) {
         // TODO: validate the request url path according to the API spec
-        if(urlParts.length == 3 && urlParts[1].equals("albums")) {
-            return true;
+        // [, albumID]
+        if(urlParts.length != 2) {
+            return false;
         }
-        return false;
+        try {
+            Integer.valueOf(urlParts[1]);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -82,30 +82,23 @@ public class AlbumServlet extends HttpServlet {
         String urlPath = request.getPathInfo();
 
         // check we have a URL!
-        if (urlPath == null || urlPath.isEmpty()) {
+        if (!(urlPath == null || urlPath.isEmpty())) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write("missing parameters");
             return;
         }
 
-        String[] urlParts = urlPath.split("/");
-        if (!isUrlValidPost(urlParts)) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        } else {
-            StringBuilder sb = new StringBuilder();
-            String s;
-            String id = request.getReader().readLine();
-            while((s = request.getReader().readLine()) != null) {
-                sb.append(s);
-            }
-            Gson gson = new Gson();
-            Album album = gson.fromJson(sb.toString(), Album.class);
-            dictionary.put(id, album);
-
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().write("It works!!");
-
+        StringBuilder sb = new StringBuilder();
+        String s;
+        String id = request.getReader().readLine();
+        while((s = request.getReader().readLine()) != null) {
+            sb.append(s);
         }
+        Gson gson = new Gson();
+        Album album = gson.fromJson(sb.toString(), Album.class);
+        dictionary.put(id, album);
 
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().write("It works!!");
     }
 }

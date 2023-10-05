@@ -3,10 +3,12 @@ import java.util.concurrent.CountDownLatch;
 public class Thread implements Runnable{
     private final CountDownLatch latch;
     private final int numRequests;
+    private final String iPAddr;
 
-    public Thread(CountDownLatch latch, int numRequests) {
+    public Thread(CountDownLatch latch, int numRequests, String iPAddr) {
         this.latch = latch;
         this.numRequests = numRequests;
+        this.iPAddr = iPAddr;
     }
 
 
