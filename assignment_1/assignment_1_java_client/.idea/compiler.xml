@@ -6,7 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="assignment_1_java_server" />
+        <module name="assignment_1_java_client" />
       </profile>
     </annotationProcessing>
   </component>

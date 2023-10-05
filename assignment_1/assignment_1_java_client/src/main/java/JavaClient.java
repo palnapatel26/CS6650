@@ -15,7 +15,7 @@ public class JavaClient {
         for (int i = 0; i < Constants.NUM_THREADS; i++) {
             // Loop through
             // for(i = 0; i < numThreadGroupSize; i++) {
-                // new Thread()
+            // new Thread()
             //}
             // wait 2 seconds
         }
@@ -39,5 +39,4 @@ public class JavaClient {
                         + "Total throughput in requests per second: " + throughPut
         );
     }
-
 }

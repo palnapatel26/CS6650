@@ -14,6 +14,5 @@ public class Thread implements Runnable{
     public void run() {
         // define the base path which is the url
         final String BASE_PATH = "http://" + Constants.SERVER_IP + ":/8080/assignment_1_server_war";
-
     }
 }
