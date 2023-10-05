@@ -1,21 +1,33 @@
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
+import java.awt.*;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.UUID;
 
 @WebServlet(name = "AlbumServlet", value = "/AlbumServlet")
+@MultipartConfig(fileSizeThreshold=1024*1024*10, // 10 MB
+        maxFileSize=1024*1024*50, // 50 MB
+        maxRequestSize=1024*1024*100) // 100 MB
 public class AlbumServlet extends HttpServlet {
     private Profile profile1 = new Profile("Sex Pistols","Never Mind The Bollocks!", "1977");
     private Profile profile2 = new Profile("Drake","Take Care", "2011");
     private Profile profile3 = new Profile("J. Cole","Born Sinner", "2013");
-    private Album album1 = new Album("image1.jpg", profile1);
-    private Album album2 = new Album("image1.jpg", profile2);
-    private Album album3 = new Album("image1.jpg", profile3);
+    private byte[] image1 = new byte[] {10, 20, 15};
+    private byte[] image2 = new byte[] {10, 20, 15};
+    private byte[] image3 = new byte[] {10, 20, 15};
+
+
+    private Album album1 = new Album(image1, profile1);
+    private Album album2 = new Album(image2, profile2);
+    private Album album3 = new Album(image3, profile3);
 
     private HashMap<String, Album> albumDictionary = new HashMap<String, Album>(){{
         put("1", album1);
@@ -60,7 +72,6 @@ public class AlbumServlet extends HttpServlet {
                 out.print(profileString);
                 out.println();
                 out.flush();
-                response.getWriter().write("Album ID found!");
                 response.setStatus(HttpServletResponse.SC_OK);
 
             }
@@ -96,21 +107,46 @@ public class AlbumServlet extends HttpServlet {
 //        }
 
         System.out.println("reaching this point");
-        StringBuilder sb = new StringBuilder();
-        String s;
-        String image = request.getReader().readLine();
-        System.out.println(image);
-        while((s = request.getReader().readLine()) != null) {
-            System.out.println(s);
-            sb.append(s);
-        }
-        Gson gson = new Gson();
-        Profile profile = gson.fromJson(sb.toString(), Profile.class);
-        Album album = new Album(image, profile);
-        String uniqueID = UUID.randomUUID().toString();
-        albumDictionary.put(uniqueID, album);
+        //String image = request.getReader().readLine();
+        Part imagePart = request.getPart("image");
 
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.getWriter().write("It works!!");
+        Part profilePart = request.getPart("profile");
+
+        if ((profilePart != null && profilePart.getSize() > 0) && imagePart != null && imagePart.getSize() > 0) {
+            try {
+                // get image data
+                byte[] imageData = new byte[(int) imagePart.getSize()];
+                System.out.println(imageData.length);
+
+                // get profile data
+                StringBuilder sb = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(profilePart.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+
+                    System.out.println(sb);
+
+                    Gson gson = new Gson();
+                    Profile profile = gson.fromJson(sb.toString(), Profile.class);
+                    System.out.println(profile.toString());
+
+                    Album album = new Album(imageData, profile);
+                    String uniqueID = UUID.randomUUID().toString();
+                    albumDictionary.put(uniqueID, album);
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    JsonObject data = new JsonObject();
+                    data.addProperty("albumID", uniqueID);
+                    data.addProperty("imageSize", String.valueOf(album.getImage().length));
+                    String result = gson.toJson(data);
+                    response.getWriter().write(result);
+                }
+            } catch (IOException e) {
+                JsonObject data = new JsonObject();
+                data.addProperty("msg", "ERROR: it did not work");
+
+            }
+        }
     }
 }

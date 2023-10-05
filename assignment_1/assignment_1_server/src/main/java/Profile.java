@@ -32,4 +32,12 @@ public class Profile {
     public void setYear(String year) {
         this.year = year;
     }
+
+    @Override
+    public String toString() {
+        return "Profile{" +
+                "artist: " + artist + " " + "title: " + title + " " + "year: " + year + " " +
+                "]";
+    }
+
 }
