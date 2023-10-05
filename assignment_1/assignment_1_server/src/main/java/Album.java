@@ -1,35 +1,25 @@
 public class Album {
-    private String artist;
-    private String title;
-    private String year;
+    private String image;
+    private Profile profile;
 
-    public Album(String artist, String title, String year) {
-        this.artist = artist;
-        this.title = title;
-        this.year = year;
+    public Album(String image, Profile profile) {
+        this.image = image;
+        this.profile = profile;
     }
 
-    public String getArtist() {
-        return artist;
+    public String getImage() {
+        return image;
     }
 
-    public void setArtist(String artist) {
-        this.artist = artist;
+    public void setImage(String image) {
+        this.image = image;
     }
 
-    public String getTitle() {
-        return title;
+    public Profile getProfile() {
+        return profile;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getYear() {
-        return year;
-    }
-
-    public void setYear(String year) {
-        this.year = year;
+    public void setProfile(Profile profile) {
+        this.profile = profile;
     }
 }

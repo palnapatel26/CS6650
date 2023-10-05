@@ -10,6 +10,6 @@
 
     <servlet-mapping>
         <servlet-name>AlbumServlet</servlet-name>
-        <url-pattern>/album/*</url-pattern>
+        <url-pattern>/albums/*</url-pattern>
     </servlet-mapping>
 </web-app>

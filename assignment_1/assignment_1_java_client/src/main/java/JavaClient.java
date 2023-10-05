@@ -14,6 +14,11 @@ public class JavaClient {
         delay = Integer.valueOf(args[3]);
         iPAddr = args[4];
 
+
+
+
+
+
 //        // record start time
 //        long startTime = System.currentTimeMillis();
 //

@@ -6,14 +6,18 @@ import javax.servlet.annotation.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.Objects;
+import java.util.UUID;
 
 @WebServlet(name = "AlbumServlet", value = "/AlbumServlet")
 public class AlbumServlet extends HttpServlet {
-    private Album album1 = new Album("Sex Pistols","Never Mind The Bollocks!", "1977");
-    private Album album2 = new Album("Drake","Take Care", "2011");
-    private Album album3 = new Album("J. Cole","Born Sinner", "2013");
-    private HashMap<String, Album> dictionary = new HashMap<String, Album>(){{
+    private Profile profile1 = new Profile("Sex Pistols","Never Mind The Bollocks!", "1977");
+    private Profile profile2 = new Profile("Drake","Take Care", "2011");
+    private Profile profile3 = new Profile("J. Cole","Born Sinner", "2013");
+    private Album album1 = new Album("image1.jpg", profile1);
+    private Album album2 = new Album("image1.jpg", profile2);
+    private Album album3 = new Album("image1.jpg", profile3);
+
+    private HashMap<String, Album> albumDictionary = new HashMap<String, Album>(){{
         put("1", album1);
         put("2", album2);
         put("3", album3);
@@ -35,24 +39,26 @@ public class AlbumServlet extends HttpServlet {
         String[] urlParts = urlPath.split("/");
         // and now validate url path and return the response status code
         // (and maybe also some value if input is valid)
-        // [, album, albumID]
+        // [, albumID]
 
         if (!isUrlValidGet(urlParts)) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } else {
             String albumID = urlParts[1];
-            Album album = dictionary.get(albumID);
-            if (album == null) {
+            Album album = albumDictionary.get(albumID);
+            if (albumID == null) {
                 response.getWriter().write("Album ID not found!");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             } else {
                 Gson gson = new Gson();
-                String albumString = gson.toJson(album);
+                Profile profile = album.getProfile();
+                String profileString = gson.toJson(profile);
 
                 PrintWriter out = response.getWriter();
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-                out.print(albumString);
+                out.print(profileString);
+                out.println();
                 out.flush();
                 response.getWriter().write("Album ID found!");
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -80,23 +86,29 @@ public class AlbumServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/plain");
         String urlPath = request.getPathInfo();
+        System.out.println("urlPath: " + urlPath);
 
         // check we have a URL!
-        if (!(urlPath == null || urlPath.isEmpty())) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-            response.getWriter().write("missing parameters");
-            return;
-        }
+//        if (urlPath != null || !urlPath.isEmpty()) {
+//            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+//            response.getWriter().write("missing parameters");
+//            return;
+//        }
 
+        System.out.println("reaching this point");
         StringBuilder sb = new StringBuilder();
         String s;
-        String id = request.getReader().readLine();
+        String image = request.getReader().readLine();
+        System.out.println(image);
         while((s = request.getReader().readLine()) != null) {
+            System.out.println(s);
             sb.append(s);
         }
         Gson gson = new Gson();
-        Album album = gson.fromJson(sb.toString(), Album.class);
-        dictionary.put(id, album);
+        Profile profile = gson.fromJson(sb.toString(), Profile.class);
+        Album album = new Album(image, profile);
+        String uniqueID = UUID.randomUUID().toString();
+        albumDictionary.put(uniqueID, album);
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.getWriter().write("It works!!");
