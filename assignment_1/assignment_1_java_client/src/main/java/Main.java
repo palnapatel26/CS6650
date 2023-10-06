@@ -63,6 +63,8 @@ public class Main {
 //                        + "Number of threads: " + Constants.NUM_THREADS + "\n"
 //                        + "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
 //                        + "Total throughput in requests per second: " + throughPut
-//        );
+//        )
+        //TODO: take the Constants.LATENCY_DATA and write it to latency.csv
+        //https://www.baeldung.com/java-csv?fbclid=IwAR1YsDduIEuUQ_MBGrKhl0bC9A3csHftTBeV_LQMzxNVOjOZFd-AWnOUdk4
     }
 }
