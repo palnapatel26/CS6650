@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="io.swagger.annotations" type="repository">
+    <properties maven-id="io.swagger:swagger-annotations:1.6.11" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/out/artifacts/assignment_1_server_war_exploded/WEB-INF/lib/swagger-annotations-1.6.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
