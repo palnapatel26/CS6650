@@ -13,58 +13,63 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         // arguments
         Constants.init(args);
+        Utils.init(args);
 
-        // change countdownlatch to 10
-        CountDownLatch initializationPhaseLatch = new CountDownLatch(1);
+        CountDownLatch initializationPhaseLatch = new CountDownLatch(10);
 
         // Create thread pool
-        // change threads to 10 and numRequests to 100
-        ExecutorService initializationPhaseThreadPool = launchThreadPool(1, 1,
+        ExecutorService initializationPhaseThreadPool = launchThreadPool(10, 100,
                 initializationPhaseLatch);
 
         initializationPhaseLatch.await();
 
         initializationPhaseThreadPool.shutdown();
 
-//        // record start time
-//        long startTime = System.currentTimeMillis();
-//
-//        CountDownLatch latch = new CountDownLatch(Constants.NUM_THREADS);
-//
-//        ExecutorService[] threadPools = new ExecutorService[Constants.NUM_THREAD_GROUPS];
-//
-//        // Loop through all the threads
-//        for (int i = 0; i < Constants.NUM_THREAD_GROUPS; i++) {
-//            // Create thread pool
-//            threadPools[i] = launchThreadPool(Constants.THREAD_GROUP_SIZE, Constants.NUM_TASKS_PER_THREAD, latch);
-//
-//            // wait 2 seconds
-//            Thread.sleep(Constants.DELAY * 1000);
-//
-//        }
-//
-//        // Wait for all threads to finish
-//        latch.await();
-//
-//        // record end time
-//        long endTime = System.currentTimeMillis();
-//        long totalExecutionTime = endTime - startTime;
-//
-//        long throughPut = (Constants.NUM_TASKS)
-//                / (totalExecutionTime / 1000);
-//
-//        // Shut down the thread pool
-//        for(ExecutorService threadPool : threadPools) {
-//            threadPool.shutdown();
-//        }
-//
-//        System.out.println(
-//                "Number of Tasks: " + Constants.NUM_TASKS + "\n"
-//                        + "Number of threads: " + Constants.NUM_THREADS + "\n"
-//                        + "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
-//                        + "Total throughput in requests per second: " + throughPut
-//        )
-        //TODO: take the Constants.LATENCY_DATA and write it to latency.csv
-        //https://www.baeldung.com/java-csv?fbclid=IwAR1YsDduIEuUQ_MBGrKhl0bC9A3csHftTBeV_LQMzxNVOjOZFd-AWnOUdk4
+        // record start time
+        long startTime = System.currentTimeMillis();
+
+        CountDownLatch latch = new CountDownLatch(Constants.NUM_THREADS);
+
+        ExecutorService[] threadPools = new ExecutorService[Constants.NUM_THREAD_GROUPS];
+
+        // Loop through all the threads
+        for (int i = 0; i < Constants.NUM_THREAD_GROUPS; i++) {
+            // Create thread pool
+            threadPools[i] = launchThreadPool(Constants.THREAD_GROUP_SIZE, Constants.NUM_TASKS_PER_THREAD, latch);
+
+            // wait 2 seconds
+            Thread.sleep(Constants.DELAY * 1000);
+
+        }
+
+        // Wait for all threads to finish
+        latch.await();
+
+        // record end time
+        long endTime = System.currentTimeMillis();
+        long totalExecutionTime = (endTime - startTime);
+
+        double throughput = ((double) Constants.NUM_TASKS) / totalExecutionTime;
+        throughput *= 1000;
+
+        // Shut down the thread pool
+        for(ExecutorService threadPool : threadPools) {
+            threadPool.shutdown();
+        }
+
+        System.out.println(
+                "Number of Tasks: " + Constants.NUM_TASKS + "\n"
+                        + "Number of threads: " + Constants.NUM_THREADS + "\n"
+                        + "Total run time (wall time) in ms: " + totalExecutionTime + "\n"
+                        + "Total throughput in requests per second: " + throughput + "\n"
+                        + "Total successful requests: " + Utils.successCount.get() + "\n"
+                        + "Total failed requests: " + Utils.failureCount.get()
+        );
+
+        System.out.println("POST Stats:");
+        Utils.responseTimeStats(Utils.POST_DATA);
+
+        System.out.println("GET Stats:");
+        Utils.responseTimeStats(Utils.GET_DATA);
     }
 }

@@ -5,10 +5,7 @@ import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -93,18 +90,29 @@ public class AlbumServlet extends HttpServlet {
         return true;
     }
 
+    // Helper method to extract the filename from a Part
+    private String getFileName(final Part part) {
+        final String partHeader = part.getHeader("content-disposition");
+        for (String content : partHeader.split(";")) {
+            if (content.trim().startsWith("filename")) {
+                return content.substring(content.indexOf('=') + 1).trim().replace("\"", "");
+            }
+        }
+        return null;
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/plain");
+        response.setContentType("application/json");
         String urlPath = request.getPathInfo();
         System.out.println("urlPath: " + urlPath);
 
         // check we have a URL!
-//        if (urlPath != null || !urlPath.isEmpty()) {
-//            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-//            response.getWriter().write("missing parameters");
-//            return;
-//        }
+        if (urlPath != null) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            response.getWriter().write("missing parameters");
+            return;
+        }
 
         System.out.println("reaching this point");
         //String image = request.getReader().readLine();
@@ -115,7 +123,10 @@ public class AlbumServlet extends HttpServlet {
         if ((profilePart != null && profilePart.getSize() > 0) && imagePart != null && imagePart.getSize() > 0) {
             try {
                 // get image data
-                byte[] imageData = new byte[(int) imagePart.getSize()];
+                //byte[] imageData = new byte[(int) imagePart.getSize()];
+                byte[] imageData = new byte[] {10, 20, 15};
+                int imageSize = (int) imagePart.getSize();
+
                 System.out.println(imageData.length);
 
                 // get profile data
@@ -129,22 +140,27 @@ public class AlbumServlet extends HttpServlet {
                     System.out.println(sb);
 
                     Gson gson = new Gson();
-                    Profile profile = gson.fromJson(sb.toString(), Profile.class);
-                    System.out.println(profile.toString());
+                    //Profile profile = gson.fromJson(sb.toString(), Profile.class);
 
-                    Album album = new Album(imageData, profile);
+
+                    //Album album = new Album(imageData, profile);
                     String uniqueID = UUID.randomUUID().toString();
-                    albumDictionary.put(uniqueID, album);
+                    //albumDictionary.put(uniqueID, album);
+
                     response.setStatus(HttpServletResponse.SC_OK);
                     JsonObject data = new JsonObject();
                     data.addProperty("albumID", uniqueID);
-                    data.addProperty("imageSize", String.valueOf(album.getImage().length));
+                    data.addProperty("imageSize", String.valueOf(imageSize));
                     String result = gson.toJson(data);
+                    System.out.println(result);
                     response.getWriter().write(result);
                 }
             } catch (IOException e) {
+                Gson gson = new Gson();
                 JsonObject data = new JsonObject();
-                data.addProperty("msg", "ERROR: it did not work");
+                data.addProperty("msg", "ERROR: it did not work!");
+                String result = gson.toJson(data);
+                response.getWriter().write(result);
 
             }
         }
