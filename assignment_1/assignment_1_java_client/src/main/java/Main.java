@@ -13,7 +13,6 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         // arguments
         Constants.init(args);
-        Utils.init(args);
 
         CountDownLatch initializationPhaseLatch = new CountDownLatch(10);
 
@@ -66,10 +65,5 @@ public class Main {
                         + "Total failed requests: " + Utils.failureCount.get()
         );
 
-        System.out.println("POST Stats:");
-        Utils.responseTimeStats(Utils.POST_DATA);
-
-        System.out.println("GET Stats:");
-        Utils.responseTimeStats(Utils.GET_DATA);
     }
 }

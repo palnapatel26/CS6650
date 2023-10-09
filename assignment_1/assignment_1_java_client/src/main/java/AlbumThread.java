@@ -1,9 +1,7 @@
 import io.swagger.client.ApiClient;
 import io.swagger.client.ApiException;
 import io.swagger.client.api.DefaultApi;
-import io.swagger.client.model.AlbumInfo;
 import io.swagger.client.model.AlbumsProfile;
-import io.swagger.client.model.ImageMetaData;
 
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
@@ -15,47 +13,6 @@ public class AlbumThread implements Runnable{
     public AlbumThread(CountDownLatch latch, int numRequests) {
         this.latch = latch;
         this.numRequests = numRequests;
-    }
-
-    private void doPost(DefaultApi apiInstance, File image, AlbumsProfile albumsProfile) throws ApiException {
-
-
-        //record start time
-        long startTime = System.currentTimeMillis();
-
-        // Send the request and get response
-        apiInstance.newAlbum(image, albumsProfile);
-
-        //record end time
-        long endTime = System.currentTimeMillis();
-
-        long latency = endTime - startTime;
-
-        long[] entry = new long[]{startTime, latency};
-
-        Utils.POST_DATA.add(entry);
-
-    }
-
-    private void doGet(DefaultApi apiInstance, String albumID) throws ApiException {
-
-
-        //record start time
-        long startTime = System.currentTimeMillis();
-
-        // Send the request and get response
-        apiInstance.getAlbumByKey(albumID);
-
-        //record end time
-        long endTime = System.currentTimeMillis();
-
-
-        long latency = endTime - startTime;
-
-        long[] entry = new long[]{startTime, latency};
-
-        Utils.GET_DATA.add(entry);
-
     }
 
     @Override
@@ -81,8 +38,8 @@ public class AlbumThread implements Runnable{
             int tries = 0;
             while(tries < Constants.MAX_RETRIES) {
                 try {
-                    doPost(apiInstance, image, albumsProfile);
-                    doGet(apiInstance, "1");
+                    apiInstance.newAlbum(image, albumsProfile);
+                    apiInstance.getAlbumByKey("1");
                     break;
                 } catch (ApiException e) {
                     e.printStackTrace();
@@ -100,7 +57,6 @@ public class AlbumThread implements Runnable{
 
             }
         }
-
 
         this.latch.countDown();
 
