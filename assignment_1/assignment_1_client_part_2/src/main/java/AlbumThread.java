@@ -15,6 +15,7 @@ public class AlbumThread implements Runnable{
         this.numRequests = numRequests;
     }
 
+
     private void doPost(DefaultApi apiInstance, File image, AlbumsProfile albumsProfile) throws ApiException {
 
 
@@ -55,14 +56,14 @@ public class AlbumThread implements Runnable{
     @Override
     public void run() {
         // define the base path which is the url
-        final String BASE_PATH = "http://" + Constants.SERVER_IP + ":8080/assignment_1_server_war";
+        final String BASE_PATH = Constants.SERVER_IP + ":8080/assignment_1_server_war";
         DefaultApi apiInstance = new DefaultApi();
         ApiClient apiClient = apiInstance.getApiClient();
         apiClient.setBasePath(BASE_PATH);
 
 
 
-        File image = new File("/Users/palnapatel/CS6650/CS6650/assignment_1/assignment_1_java_client/src/main/java/nmtb.png");
+        File image = new File("/Users/palnapatel/CS6650/CS6650/assignment_1/assignment_1_client_part_2/src/main/java/nmtb.png");
 
         AlbumsProfile albumsProfile = new AlbumsProfile();
 
@@ -76,7 +77,7 @@ public class AlbumThread implements Runnable{
             while(tries < Constants.MAX_RETRIES) {
                 try {
                     doPost(apiInstance, image, albumsProfile);
-                    doGet(apiInstance, "1");
+                    doGet(apiInstance, "871c9a56-637a-4a60-80fb-44e74e3b1e32");
                     break;
                 } catch (ApiException e) {
                     e.printStackTrace();

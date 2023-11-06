@@ -6,6 +6,10 @@ public class Album {
         this.image = image;
         this.profile = profile;
     }
+    public Album(){
+        this.image = null;
+        this.profile = new Profile();
+    }
 
     public byte[] getImage() {
         return image;

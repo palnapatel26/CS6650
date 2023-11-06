@@ -1,9 +1,5 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 public class Constants {
-    public static String SERVER_IP = "127.0.0.1";
+    public static String SERVER_IP = "http://127.0.0.1";
     public static int THREAD_GROUP_SIZE = 100;
     public static int NUM_THREAD_GROUPS = 10;
     public static int NUM_TASKS;

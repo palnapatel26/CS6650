@@ -4,33 +4,46 @@ import com.google.gson.JsonObject;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
-import java.awt.*;
 import java.io.*;
-import java.util.HashMap;
 import java.util.UUID;
+import java.sql.*;
+
+
 
 @WebServlet(name = "AlbumServlet", value = "/AlbumServlet")
 @MultipartConfig(fileSizeThreshold=1024*1024*10, // 10 MB
         maxFileSize=1024*1024*50, // 50 MB
         maxRequestSize=1024*1024*100) // 100 MB
 public class AlbumServlet extends HttpServlet {
-    private Profile profile1 = new Profile("Sex Pistols","Never Mind The Bollocks!", "1977");
-    private Profile profile2 = new Profile("Drake","Take Care", "2011");
-    private Profile profile3 = new Profile("J. Cole","Born Sinner", "2013");
-    private byte[] image1 = new byte[] {10, 20, 15};
-    private byte[] image2 = new byte[] {10, 20, 15};
-    private byte[] image3 = new byte[] {10, 20, 15};
 
+    public static Connection connection;
 
-    private Album album1 = new Album(image1, profile1);
-    private Album album2 = new Album(image2, profile2);
-    private Album album3 = new Album(image3, profile3);
+    @Override
+    public void init() throws ServletException {
+        super.init();
 
-    private HashMap<String, Album> albumDictionary = new HashMap<String, Album>(){{
-        put("1", album1);
-        put("2", album2);
-        put("3", album3);
-    }};
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // "jdbc:mysql://database-1.cz2zgax10cez.us-west-2.rds.amazonaws.com:3306/albums"
+
+            String DB_URL = "jdbc:mysql://localhost:3306/albums";
+            String USER = "root";
+            // local password "MyNewPass"
+            String PASS = "MyNewPass";
+            connection = DriverManager.getConnection(DB_URL, USER, PASS);
+            System.out.println("connected to DB");
+
+        } catch (ClassNotFoundException e) {
+            System.out.println("failed to connect to DB");
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            System.out.println("failed to connect to DB");
+            throw new RuntimeException(e);
+
+        }
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         // albums/
@@ -39,7 +52,7 @@ public class AlbumServlet extends HttpServlet {
         System.out.println("debug print: " + urlPath);
 
         // check we have a URL!
-        if (urlPath == null || urlPath.isEmpty()) {
+        if (urlPath == null) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             response.getWriter().write("missing parameters");
             return;
@@ -54,19 +67,26 @@ public class AlbumServlet extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         } else {
             String albumID = urlParts[1];
-            Album album = albumDictionary.get(albumID);
             if (albumID == null) {
                 response.getWriter().write("Album ID not found!");
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             } else {
+
+                Album album = null;
+                try {
+                    System.out.println("getting album info from database");
+                    album = getAlbum(albumID);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
                 Gson gson = new Gson();
                 Profile profile = album.getProfile();
-                String profileString = gson.toJson(profile);
+                String stringProfile = gson.toJson(profile, Profile.class);
 
                 PrintWriter out = response.getWriter();
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-                out.print(profileString);
+                out.println(stringProfile);
                 out.println();
                 out.flush();
                 response.setStatus(HttpServletResponse.SC_OK);
@@ -77,14 +97,9 @@ public class AlbumServlet extends HttpServlet {
     }
 
     private boolean isUrlValidGet(String[] urlParts) {
-        // TODO: validate the request url path according to the API spec
+        // validate the request url path according to the API spec
         // [, albumID]
         if(urlParts.length != 2) {
-            return false;
-        }
-        try {
-            Integer.valueOf(urlParts[1]);
-        } catch (NumberFormatException e) {
             return false;
         }
         return true;
@@ -101,11 +116,54 @@ public class AlbumServlet extends HttpServlet {
         return null;
     }
 
+    private void insertAlbum(String id, String artist, String title, String year, byte[] image) throws SQLException {
+        // Create the albums table if it doesn't exist
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS albums ("
+                + "id VARCHAR(255) PRIMARY KEY,"
+                + "artist VARCHAR(255),"
+                + "title VARCHAR(255),"
+                + "year VARCHAR(4),"
+                + "image BLOB"
+                + ")";
+        try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
+            preparedStatement.execute();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        String query = "INSERT INTO albums (id, artist, title, year, image) VALUES (?, ?, ?, ?, ?)";
+
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+            preparedStatement.setString(1, id);
+            preparedStatement.setString(2, artist);
+            preparedStatement.setString(3, title);
+            preparedStatement.setString(4, year);
+            preparedStatement.setBytes(5, image);
+            preparedStatement.executeUpdate();
+        }
+    }
+
+    private Album getAlbum(String albumID) throws SQLException {
+        Album album = new Album();
+        Profile profile = new Profile();
+            String query = "SELECT * FROM albums WHERE id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, albumID);
+                ResultSet rs = preparedStatement.executeQuery();
+                if(rs.next()) {
+                    profile.setArtist(rs.getString("artist"));
+                    profile.setTitle(rs.getString("title"));
+                    profile.setYear(rs.getString("year"));
+                    album.setImage(rs.getBytes("image"));
+                    album.setProfile(profile);
+                }
+            }
+        return album;
+    }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("application/json");
         String urlPath = request.getPathInfo();
-        System.out.println("urlPath: " + urlPath);
 
         // check we have a URL!
         if (urlPath != null) {
@@ -114,7 +172,6 @@ public class AlbumServlet extends HttpServlet {
             return;
         }
 
-        System.out.println("reaching this point");
         //String image = request.getReader().readLine();
         Part imagePart = request.getPart("image");
 
@@ -123,11 +180,10 @@ public class AlbumServlet extends HttpServlet {
         if ((profilePart != null && profilePart.getSize() > 0) && imagePart != null && imagePart.getSize() > 0) {
             try {
                 // get image data
-                //byte[] imageData = new byte[(int) imagePart.getSize()];
-                byte[] imageData = new byte[] {10, 20, 15};
+                byte[] imageData = imagePart.getInputStream().readAllBytes();
                 int imageSize = (int) imagePart.getSize();
 
-                System.out.println(imageData.length);
+
 
                 // get profile data
                 StringBuilder sb = new StringBuilder();
@@ -137,15 +193,24 @@ public class AlbumServlet extends HttpServlet {
                         sb.append(line);
                     }
 
-                    System.out.println(sb);
+                    System.out.println("sb: " + sb);
+                    String jsonString = convertToJsonLikeString(sb.toString());
+
 
                     Gson gson = new Gson();
-                    //Profile profile = gson.fromJson(sb.toString(), Profile.class);
+                    Profile profile = gson.fromJson(jsonString, Profile.class);
+                    System.out.println("printing profile json");
+                    System.out.println(profile.getArtist());
+                    System.out.println(profile.getTitle());
+                    System.out.println(profile.getYear());
 
 
                     //Album album = new Album(imageData, profile);
                     String uniqueID = UUID.randomUUID().toString();
                     //albumDictionary.put(uniqueID, album);
+
+                    //Add database
+                    insertAlbum(uniqueID, profile.getArtist(), profile.getTitle(), profile.getYear(), imageData);
 
                     response.setStatus(HttpServletResponse.SC_OK);
                     JsonObject data = new JsonObject();
@@ -155,7 +220,7 @@ public class AlbumServlet extends HttpServlet {
                     System.out.println(result);
                     response.getWriter().write(result);
                 }
-            } catch (IOException e) {
+            } catch (IOException | SQLException e) {
                 Gson gson = new Gson();
                 JsonObject data = new JsonObject();
                 data.addProperty("msg", "ERROR: it did not work!");
@@ -165,4 +230,40 @@ public class AlbumServlet extends HttpServlet {
             }
         }
     }
+
+    public static String convertToJsonLikeString(String input) {
+        // First, remove "class AlbumsProfile {" and "}" parts.
+        input = input.replace("class AlbumsProfile {", "").replace("}", "").trim();
+
+        // Split the string by spaces followed by words that end with colon
+        String[] keyValuePairs = input.split("\\s+(?=[a-zA-Z]+:)");
+
+        // Initialize StringBuilder for JSON-like string.
+        StringBuilder jsonLikeBuilder = new StringBuilder();
+        jsonLikeBuilder.append("{");
+
+        // Process each key-value pair.
+        for (int i = 0; i < keyValuePairs.length; i++) {
+            String[] parts = keyValuePairs[i].split(":");
+
+            // Trim whitespace from key and value
+            String key = parts[0].trim();
+            String value = parts[1].trim();
+
+            // Construct the string: "key": "value"
+            jsonLikeBuilder.append("\"").append(key).append("\": \"").append(value).append("\"");
+
+            // If this is not the last item, append a comma.
+            if (i < keyValuePairs.length - 1) {
+                jsonLikeBuilder.append(", ");
+            }
+        }
+
+        jsonLikeBuilder.append("}");
+
+        // Convert the StringBuilder to a String and return it.
+        return jsonLikeBuilder.toString();
+    }
+
+
 }

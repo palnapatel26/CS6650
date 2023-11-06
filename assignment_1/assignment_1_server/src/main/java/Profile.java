@@ -8,6 +8,11 @@ public class Profile {
         this.title = title;
         this.year = year;
     }
+    public Profile() {
+        this.artist = null;
+        this.title = null;
+        this.year = null;
+    }
 
     public String getArtist() {
         return artist;
