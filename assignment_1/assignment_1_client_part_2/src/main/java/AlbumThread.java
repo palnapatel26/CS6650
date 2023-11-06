@@ -77,7 +77,7 @@ public class AlbumThread implements Runnable{
             while(tries < Constants.MAX_RETRIES) {
                 try {
                     doPost(apiInstance, image, albumsProfile);
-                    doGet(apiInstance, "871c9a56-637a-4a60-80fb-44e74e3b1e32");
+                    doGet(apiInstance, "00015fcc-8d51-4405-8b6f-f09548aa9f94");
                     break;
                 } catch (ApiException e) {
                     e.printStackTrace();

@@ -15,34 +15,10 @@ import java.sql.*;
         maxFileSize=1024*1024*50, // 50 MB
         maxRequestSize=1024*1024*100) // 100 MB
 public class AlbumServlet extends HttpServlet {
-
-    public static Connection connection;
-
-    @Override
-    public void init() throws ServletException {
-        super.init();
-
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-
-            // "jdbc:mysql://database-1.cz2zgax10cez.us-west-2.rds.amazonaws.com:3306/albums"
-
-            String DB_URL = "jdbc:mysql://localhost:3306/albums";
-            String USER = "root";
-            // local password "MyNewPass"
-            String PASS = "MyNewPass";
-            connection = DriverManager.getConnection(DB_URL, USER, PASS);
-            System.out.println("connected to DB");
-
-        } catch (ClassNotFoundException e) {
-            System.out.println("failed to connect to DB");
-            throw new RuntimeException(e);
-        } catch (SQLException e) {
-            System.out.println("failed to connect to DB");
-            throw new RuntimeException(e);
-
-        }
-    }
+    public static String DB_URL = "jdbc:mysql://database-1.cz2zgax10cez.us-west-2.rds.amazonaws.com:3306/albums";
+    public static String USER = "admin";
+    // local password "MyNewPass"
+    public static String PASS = "Futako1!";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -76,7 +52,7 @@ public class AlbumServlet extends HttpServlet {
                 try {
                     System.out.println("getting album info from database");
                     album = getAlbum(albumID);
-                } catch (SQLException e) {
+                } catch (ClassNotFoundException | SQLException e) {
                     throw new RuntimeException(e);
                 }
                 Gson gson = new Gson();
@@ -116,40 +92,45 @@ public class AlbumServlet extends HttpServlet {
         return null;
     }
 
-    private void insertAlbum(String id, String artist, String title, String year, byte[] image) throws SQLException {
-        // Create the albums table if it doesn't exist
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS albums ("
-                + "id VARCHAR(255) PRIMARY KEY,"
-                + "artist VARCHAR(255),"
-                + "title VARCHAR(255),"
-                + "year VARCHAR(4),"
-                + "image BLOB"
-                + ")";
-        try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
-            preparedStatement.execute();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        String query = "INSERT INTO albums (id, artist, title, year, image) VALUES (?, ?, ?, ?, ?)";
+    private void insertAlbum(String id, String artist, String title, String year, byte[] image) throws SQLException, ClassNotFoundException {
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            // Create the albums table if it doesn't exist
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS albums ("
+                    + "id VARCHAR(255) PRIMARY KEY,"
+                    + "artist VARCHAR(255),"
+                    + "title VARCHAR(255),"
+                    + "year VARCHAR(4),"
+                    + "image BLOB"
+                    + ")";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
+                preparedStatement.execute();
+            }
+            String query = "INSERT INTO albums (id, artist, title, year, image) VALUES (?, ?, ?, ?, ?)";
 
-        try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-            preparedStatement.setString(1, id);
-            preparedStatement.setString(2, artist);
-            preparedStatement.setString(3, title);
-            preparedStatement.setString(4, year);
-            preparedStatement.setBytes(5, image);
-            preparedStatement.executeUpdate();
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, id);
+                preparedStatement.setString(2, artist);
+                preparedStatement.setString(3, title);
+                preparedStatement.setString(4, year);
+                preparedStatement.setBytes(5, image);
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    private Album getAlbum(String albumID) throws SQLException {
+    private Album getAlbum(String albumID) throws SQLException, ClassNotFoundException {
         Album album = new Album();
         Profile profile = new Profile();
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
             String query = "SELECT * FROM albums WHERE id = ?";
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, albumID);
                 ResultSet rs = preparedStatement.executeQuery();
-                if(rs.next()) {
+                if (rs.next()) {
                     profile.setArtist(rs.getString("artist"));
                     profile.setTitle(rs.getString("title"));
                     profile.setYear(rs.getString("year"));
@@ -157,6 +138,9 @@ public class AlbumServlet extends HttpServlet {
                     album.setProfile(profile);
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return album;
     }
 
@@ -220,7 +204,7 @@ public class AlbumServlet extends HttpServlet {
                     System.out.println(result);
                     response.getWriter().write(result);
                 }
-            } catch (IOException | SQLException e) {
+            } catch (IOException | SQLException | ClassNotFoundException e) {
                 Gson gson = new Gson();
                 JsonObject data = new JsonObject();
                 data.addProperty("msg", "ERROR: it did not work!");
