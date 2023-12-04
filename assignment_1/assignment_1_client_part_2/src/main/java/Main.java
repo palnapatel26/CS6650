@@ -71,7 +71,11 @@ public class Main {
         Utils.responseTimeStats(Utils.post_data);
         System.out.println();
 
-        System.out.println("GET Stats:");
-        Utils.responseTimeStats(Utils.get_data);
+        //System.out.println("GET Stats:");
+        //Utils.responseTimeStats(Utils.get_data);
+
+        System.out.println("REVIEW Stats:");
+        Utils.responseTimeStats(Utils.review_data);
+        System.out.println();
     }
 }

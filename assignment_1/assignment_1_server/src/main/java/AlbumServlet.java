@@ -15,10 +15,10 @@ import java.sql.*;
         maxFileSize=1024*1024*50, // 50 MB
         maxRequestSize=1024*1024*100) // 100 MB
 public class AlbumServlet extends HttpServlet {
-    public static String DB_URL = "jdbc:mysql://database-1.cz2zgax10cez.us-west-2.rds.amazonaws.com:3306/albums";
-    public static String USER = "admin";
+    public static String DB_URL = "jdbc:mysql://localhost:3306/albums";
+    public static String USER = "root";
     // local password "MyNewPass"
-    public static String PASS = "Futako1!";
+    public static String PASS = "MyNewPass";
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -97,16 +97,21 @@ public class AlbumServlet extends HttpServlet {
         try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
             // Create the albums table if it doesn't exist
             String createTableSQL = "CREATE TABLE IF NOT EXISTS albums ("
-                    + "id VARCHAR(255) PRIMARY KEY,"
-                    + "artist VARCHAR(255),"
-                    + "title VARCHAR(255),"
-                    + "year VARCHAR(4),"
-                    + "image BLOB"
+                    + "`id` VARCHAR(255) PRIMARY KEY,"
+                    + "`artist` VARCHAR(255),"
+                    + "`title` VARCHAR(255),"
+                    + "`year` VARCHAR(4),"
+                    + "`image` BLOB,"
+                    + "`like` INT,"
+                    + "`dislike` INT"
                     + ")";
             try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
                 preparedStatement.execute();
             }
-            String query = "INSERT INTO albums (id, artist, title, year, image) VALUES (?, ?, ?, ?, ?)";
+            int like = 0;
+            int dislike = 0;
+            String query = "INSERT INTO albums (`id`, `artist`, `title`, `year`, `image`, `like`, `dislike`) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
                 preparedStatement.setString(1, id);
@@ -114,6 +119,8 @@ public class AlbumServlet extends HttpServlet {
                 preparedStatement.setString(3, title);
                 preparedStatement.setString(4, year);
                 preparedStatement.setBytes(5, image);
+                preparedStatement.setInt(6, like);
+                preparedStatement.setInt(7, dislike);
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException e) {
@@ -135,6 +142,8 @@ public class AlbumServlet extends HttpServlet {
                     profile.setTitle(rs.getString("title"));
                     profile.setYear(rs.getString("year"));
                     album.setImage(rs.getBytes("image"));
+                    album.setLikes(0);
+                    album.setDislikes(0);
                     album.setProfile(profile);
                 }
             }
@@ -248,6 +257,5 @@ public class AlbumServlet extends HttpServlet {
         // Convert the StringBuilder to a String and return it.
         return jsonLikeBuilder.toString();
     }
-
 
 }

@@ -4,6 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Utils {
     public static List<Long> post_data;
     public static List<Long> get_data;
+    public static List<Long> review_data;
     public static AtomicInteger successCount = new AtomicInteger(0);
     public static AtomicInteger failureCount = new AtomicInteger(0);
 
@@ -11,6 +12,7 @@ public class Utils {
         // each task will have a get and a post that's why *2
         post_data = new ArrayList<>(Constants.NUM_TASKS * 2);
         get_data = new ArrayList<>(Constants.NUM_TASKS * 2);
+        review_data = new ArrayList<>(Constants.NUM_TASKS * 2);
 
     }
 

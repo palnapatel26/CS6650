@@ -36,6 +36,11 @@
             <artifactId>mysql-connector-j</artifactId>
             <version>8.0.33</version> <!-- Use the latest version available -->
         </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>5.16.0</version>
+        </dependency>
 
     </dependencies>
 
